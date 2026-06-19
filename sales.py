@@ -35,7 +35,7 @@ with st.sidebar:
     col1, col2, col3 = st.columns(3)
 
     with col2:
-        st.image(logo_url, width=200)
+        st.image(logo_url, width=400)
 st.sidebar.markdown(
     """
     <div style="text-align:center;">
@@ -68,7 +68,6 @@ from dotenv import load_dotenv
 # OUTPUT_CSV=optional_output_file_name.csv
 # VERIFY_SSL=true
 load_dotenv(override=True)
-
 # ------------------------------------------------------------
 # Read configuration values from environment variables
 # ------------------------------------------------------------
@@ -217,6 +216,7 @@ def fetch_all_records(url):
             response = session.get(
                 next_url,
                 verify=VERIFY_SSL,
+                   timeout=30
             )
 
         except requests.exceptions.SSLError as error:
@@ -362,6 +362,19 @@ def save_to_csv(records, output_path):
     print(f"[SUCCESS] CSV saved at: {output_path}")
 
 @st.cache_data(ttl=3600)
+def fetch_all_records(url):
+    """Fetch all records from the given URL.
+
+    Placeholder implementation: returns an empty list if not implemented.
+    """
+    try:
+        print(f"[INFO] fetch_all_records called for URL: {url}")
+        # TODO: implement actual fetch logic. Returning empty list to avoid crash.
+        return []
+    except Exception as e:
+        print(f"[ERROR] fetch_all_records failed: {e}")
+        return []
+
 def main():
     validate_env()
     output_path = get_output_file_path(OUTPUT_CSV)
@@ -454,16 +467,17 @@ def main():
     return df1_clean, df2_clean, df_merged
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
     
-    main  ()
+# #     main  ()
     # %%
 @st.cache_data
-def load_data():
-    return main()
+def load_saved_data():
+    return pd.read_csv("InvoiceMerged.csv")
 
-with st.spinner("Fetching data from Business Central..."):
-    df1_clean, df2_clean, df_merged = load_data()
+
+with st.spinner("Loading Dashboard Data..."):
+    df_merged = load_saved_data()
 
 st.success("Data Loaded Successfully")
 
@@ -473,38 +487,43 @@ st.success("Data Loaded Successfully")
 
 import streamlit as st
 
+
+# ================= INIT =================
 # ================= INIT =================
 if "page" not in st.session_state:
     st.session_state.page = "Home"
 
-
 # ================= SIDEBAR =================
 st.sidebar.title("CONTENTS")
 
-if st.sidebar.button("Home"):
-    st.session_state.page = "Home"
+# Refresh Button
+if st.sidebar.button("🔄 Refresh Live Data"):
+    with st.spinner("Refreshing from API..."):
+        df1_clean, df2_clean, df_merged = main()
+
+        # overwrite old merged file
+        df_merged.to_csv("InvoiceMerged.csv", index=False)
+
+        st.cache_data.clear()
+
+    st.success("Data Refreshed Successfully")
     st.rerun()
 
-if st.sidebar.button("Top Products"):
-    st.session_state.page = "Products"
-    st.rerun()
+st.sidebar.markdown("---")
 
-if st.sidebar.button("Top Customers"):
-    st.session_state.page = "Customers"
-    st.rerun()
+menu = st.sidebar.radio(
+    "",
+    [
+        " Home",
+        " Top Customers",
+        " City Wise",
+        " State Wise",
+        " Watt Wise",
+        " Month Wise"
+    ]
+)
 
-if st.sidebar.button("City Wise"):
-    st.session_state.page = "City"
-    st.rerun()
-
-if st.sidebar.button("State Wise"):
-    st.session_state.page = "State"
-    st.rerun()
-
-if st.sidebar.button("Month Wise"):
-    st.session_state.page = "Month"
-    st.rerun()
-
+st.session_state.page = menu
 
 def show_home():
     st.title("Welcome to the Sales Dashboard")
@@ -512,8 +531,6 @@ def show_home():
     This dashboard provides insights into sales data, including top products, customers, and geographical analysis.
     Use the sidebar to navigate through different sections of the dashboard.
     """)
-def show_top_products():
-    st.title("Top Products")
 
 def show_top_customers():
     st.title("Top Customers")
@@ -531,17 +548,12 @@ def show_monthly_analysis():
     st.title("Monthly Sales Analysis")
 
 
-
 # ================= ROUTING =================
 if st.session_state.page == "Home":
     show_home()
 
-elif st.session_state.page == "Products":
-    show_top_products()
-
 elif st.session_state.page == "Customers":
     show_top_customers()
-
 
 elif st.session_state.page == "City":
     show_city_analysis()

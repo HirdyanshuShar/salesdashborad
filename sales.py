@@ -682,10 +682,9 @@ col4.metric(
 
 st.markdown("---")
 # %%
-print(df1_clean.columns.tolist())
 
 # %%
-df1_clean.sort_values(by='Amount', ascending=False)
+# df1_clean.sort_values(by='Amount', ascending=False)
 
 # %% [markdown]
 # TOP PRODUCTS WITH SALES AMOUNT
@@ -777,7 +776,7 @@ def show_product_pie(df_merged):
 st.header(" Top Customer Analysis")
 # st.plotly_chart(fig, use_container_width=True)
 # %%
-print(df1_clean.columns)
+# print(df1_clean.columns)
 
 # %%
 df['Customer_Label'] = (
